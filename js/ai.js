@@ -17,8 +17,12 @@ async function callAI(system, user, maxTokens, opts) {
     const body = {
       model, max_tokens: maxTokens, system,
       messages: [{ role: 'user', content: user }],
+      // ⚠️ 생각하기를 꺼 둔다. claude-sonnet-5 부터는 이 항목을 빼면 '켜짐'이 기본인데,
+      //    max_tokens 는 생각 + 답을 합쳐서 자르기 때문에 켜 두면 출제·채점 JSON 이
+      //    중간에 끊긴다(이 앱은 응답이 전부 JSON 이라 한 글자만 잘려도 못 읽는다).
+      thinking: { type: 'disabled' },
     };
-    if (useSearch) body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5 }];
+    if (useSearch) body.tools = [{ type: 'web_search_20260209', name: 'web_search', max_uses: 5 }];
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -158,7 +162,10 @@ ${opt.trendsBlock}
 
 위 주제로 실제 임용시험 스타일의 ${opt.qtype.name} 문제 1개를 출제하세요. 제시문 유형(지도안/대화/사례/표)을 다양하게 활용하고, 자체 점검을 마친 뒤 JSON만 출력하세요.`;
   // 서술형/논술형은 제시문+모범답안+해설이 길어 넉넉한 토큰 필요 (응답 잘림 방지)
-  const genTokens = opt.qtype.id === 'discourse' ? 16000 : opt.qtype.id === 'essay' ? 10000 : 6000;
+  // ⚠️ claude-sonnet-5 는 같은 글을 토큰으로 약 30% 더 길게 센다 → 4.6 때 맞춰 둔 한도면
+  //    논술·서술형 답이 중간에 잘린다. 그래서 올려 뒀다. 16000 은 그대로 두는데,
+  //    이 호출은 스트리밍이 아니라 그보다 키우면 응답 대기가 길어져 연결이 끊긴다.
+  const genTokens = opt.qtype.id === 'discourse' ? 16000 : opt.qtype.id === 'essay' ? 13000 : 8000;
   const raw = await callAI(GEN_SYSTEM, user, genTokens);
   const q = extractJson(raw);
   // 메타 보강
@@ -181,7 +188,7 @@ JSON 외 다른 텍스트 금지.`;
 async function verifyQuestion(q) {
   const user = '다음 문항을 검토하세요:\n' + JSON.stringify(q, null, 1);
   // 수정 시 전체 문항 JSON을 재생성하므로 출제와 동등하게 넉넉히 (잘림 방지)
-  const vTokens = q.qtypeId === 'discourse' ? 16000 : q.qtypeId === 'essay' ? 10000 : 6000;
+  const vTokens = q.qtypeId === 'discourse' ? 16000 : q.qtypeId === 'essay' ? 13000 : 8000;
   const raw = await callAI(VERIFY_SYSTEM, user, vTokens);
   const v = extractJson(raw);
   if (v.ok === false && v.fixed && v.fixed.question) {
@@ -229,7 +236,7 @@ async function gradeAnswer(q, userAnswer) {
 ${userAnswer}
 
 위 답안을 실제 임용시험 기준으로 채점하고 JSON만 출력하세요. score는 요소별 earned 합계와 일치해야 하며 max는 ${q.points}점입니다.`;
-  const raw = await callAI(GRADE_SYSTEM, user, q.qtypeId === 'discourse' ? 10000 : 6000);
+  const raw = await callAI(GRADE_SYSTEM, user, q.qtypeId === 'discourse' ? 13000 : 8000);
   const g = extractJson(raw);
   // 안전 보정
   g.max = q.points;
@@ -276,7 +283,7 @@ async function explainTheory(q) {
 문항 해설: ${q.explanation || '(없음)'}
 
 이 문항이 다루는 핵심 이론을 교재처럼 정리하세요. 확실하지 않은 학자명·연도는 비우고, JSON만 출력하세요.`;
-  const raw = await callAI(THEORY_SYSTEM, user, 6000);
+  const raw = await callAI(THEORY_SYSTEM, user, 8000);
   const th = extractJson(raw);
   if (!th || (!th.concept && !th.definition)) throw new Error('JSONPARSE');
   return th;
@@ -317,7 +324,8 @@ async function callChatStream(system, turns, opts) {
       'content-type': 'application/json',
       'anthropic-dangerous-direct-browser-access': 'true',
     };
-    body = { model, max_tokens: maxTokens, system, messages: turns, stream: true };
+    // 질문하기도 생각하기를 끈다 — 답이 길어지면 max_tokens 를 나눠 쓰다 잘린다
+    body = { model, max_tokens: maxTokens, system, messages: turns, stream: true, thinking: { type: 'disabled' } };
     // content_block_delta 의 text 만 모은다
     pick = j => (j.type === 'content_block_delta' && j.delta && j.delta.text) || '';
     cut = j => j.type === 'message_delta' && j.delta && j.delta.stop_reason === 'max_tokens';

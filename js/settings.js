@@ -7,7 +7,7 @@
 const SETTINGS_KEY = 'imyongssok_settings_v1';
 
 const DEFAULT_MODELS = {
-  claude: 'claude-sonnet-4-6',
+  claude: 'claude-sonnet-5',
   gemini: 'gemini-3.8-flash',
   openai: 'gpt-4o',
 };
