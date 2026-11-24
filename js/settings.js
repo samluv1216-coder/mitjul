@@ -1,4 +1,9 @@
-/* 임용쏙 — BYOK 설정 (localStorage) */
+/* 밑줄 — BYOK 설정 (localStorage) */
+
+// ⚠️ 저장소 키 접두어는 'imyongssok_' 그대로 둔다.
+//    앱 이름은 임용쏙 → 밑줄로 바뀌었지만(2026-11-24), 키를 바꾸면
+//    기존 사용자의 오답노트·개념노트·학습통계가 통째로 사라진다.
+//    브라우저는 키 이름이 다르면 그냥 "없는 값"으로 보기 때문.
 const SETTINGS_KEY = 'imyongssok_settings_v1';
 
 const DEFAULT_MODELS = {

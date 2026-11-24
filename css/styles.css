@@ -1,4 +1,4 @@
-/* 임용쏙 — deep red 테마 */
+/* 밑줄 — deep red 테마 */
 :root {
   --brand: #dc2626;
   --brand-dark: #991b1b;
@@ -390,10 +390,15 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 80px; }
 }
 @page { size: A4; margin: 10mm; }
 
+/* 설정 모달의 📦 학습 기록 옮기기 */
+.backup-box { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 4px; }
+.backup-box .q-actions { margin-top: 8px; }
+.backup-box .btn-secondary { padding: 9px 16px; }
+
 /* ==========================================================
    📘 기출노트 탭의 틀
    노트 본문·필기·질문하기의 모양새는 css/gnote.css 가 담당한다.
-   여기는 임용쏙 쪽 껍데기(과목 고르는 줄·인쇄 분기)만 둔다.
+   여기는 밑줄 쪽 껍데기(과목 고르는 줄·인쇄 분기)만 둔다.
    ========================================================== */
 .gn-tools {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -418,7 +423,7 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 80px; }
 #pnPrintInk { position: absolute; left: 0; top: 0; pointer-events: none; display: none; z-index: 2; }
 
 @media print {
-  /* 임용쏙의 기본 인쇄는 main 을 숨기고 #printArea 만 쓴다.
+  /* 밑줄의 기본 인쇄는 main 을 숨기고 #printArea 만 쓴다.
      기출노트는 반대로 본문을 그대로 찍어야 하므로 그때만 뒤집는다. */
   body.print-gnote main { display: block !important; }
   body.print-gnote #printArea { display: none !important; }

@@ -1,5 +1,5 @@
 /* ==========================================================
-   임용쏙 — 메인 UI 로직
+   밑줄 — 메인 UI 로직
    ========================================================== */
 
 const STATS_KEY = 'imyongssok_stats_v1';
@@ -412,7 +412,7 @@ function buildPrintSheet(q, g) {
 
 function doPrint(innerHtml, title) {
   const area = $('printArea');
-  area.innerHTML = `<h1 class="ps-title">📝 임용쏙 ${esc(title)}</h1>` + innerHtml;
+  area.innerHTML = `<h1 class="ps-title">📝 밑줄 ${esc(title)}</h1>` + innerHtml;
   window.print();
 }
 
@@ -712,6 +712,7 @@ function openSettings() {
   $('modelInput').value = s.models[s.provider] || '';
   $('chkVerify').checked = s.verify;
   $('testResult').textContent = '';
+  $('backupResult').textContent = '지금 쌓인 기록 — ' + backupSummary(collectBackup());
   $('settingsModal').classList.remove('hidden');
 }
 function closeSettings() { $('settingsModal').classList.add('hidden'); }
@@ -764,6 +765,13 @@ document.addEventListener('DOMContentLoaded', () => {
   $('btnCloseSettings').addEventListener('click', closeSettings);
   $('btnSaveSettings').addEventListener('click', onSaveSettings);
   $('btnTest').addEventListener('click', onTestConnection);
+  $('btnExportBackup').addEventListener('click', exportBackup);
+  $('btnImportBackup').addEventListener('click', () => $('backupFile').click());
+  $('backupFile').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    if (f) importBackup(f);
+    e.target.value = '';           // 같은 파일을 다시 골라도 change 가 뜨게
+  });
   document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
   document.querySelectorAll('input[name="provider"]').forEach(r => r.addEventListener('change', () => {
     const s = getSettings();

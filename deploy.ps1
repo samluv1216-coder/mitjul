@@ -1,5 +1,5 @@
 # ==========================================================
-#  임용쏙 배포 스크립트
+#  밑줄 배포 스크립트
 #
 #  ⚠️ 직접 `npx wrangler deploy` 하지 말 것.
 #     wrangler.toml 의 [assets] directory 가 저장소 루트(".")라서
@@ -45,16 +45,28 @@ try {
     Where-Object { $_.FullName -notlike "*\.wrangler\*" } |
     ForEach-Object { Write-Host ("  " + $_.FullName.Substring($stage.Length + 1)) }
 
+  # 두 주소에 똑같이 올린다.
+  #   mitjul      = 새 주소 (2026-11-24 임용쏙 → 밑줄 개명)
+  #   imyong-ssok = 옛 주소. 브라우저 저장소는 주소마다 따로라서, 이걸 내리면
+  #                 옛 주소에 쌓아 둔 오답노트·개념노트·학습통계·필기가 열리지 않는다.
+  #                 기록을 옮겼고 더 이상 안 쓴다면 $workers 에서 빼면 된다.
+  $workers = @('mitjul', 'imyong-ssok')
+
   Write-Host "`n[2/3] 배포" -ForegroundColor Cyan
   Push-Location $stage
-  try { npx wrangler deploy } finally { Pop-Location }
-  if ($LASTEXITCODE -ne 0) { throw "wrangler deploy 실패 (exit $LASTEXITCODE)" }
+  try {
+    foreach ($w in $workers) {
+      Write-Host ("  → " + $w) -ForegroundColor DarkCyan
+      npx wrangler deploy --name $w
+      if ($LASTEXITCODE -ne 0) { throw "wrangler deploy 실패: $w (exit $LASTEXITCODE)" }
+    }
+  } finally { Pop-Location }
 
   # --- 배포 후 실제로 요청해서 노출 여부를 본문으로 확인 ---
   # 상태 코드만 보면 안 된다: SPA 폴백을 쓰는 프로젝트는 없는 경로도 200 + 셸 HTML 을 준다.
   Write-Host "`n[3/3] 노출 점검" -ForegroundColor Cyan
   Start-Sleep -Seconds 3
-  $base = 'https://imyong-ssok.samluv.workers.dev'
+  $base = 'https://mitjul.samluv.workers.dev'
   $checks = @{
     '/.git/config'                        = '[core]'
     '/.git/HEAD'                          = 'ref:'
