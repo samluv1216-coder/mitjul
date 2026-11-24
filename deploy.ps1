@@ -13,7 +13,8 @@ $src = $PSScriptRoot
 
 # --- 올릴 것만 고르는 허용 목록 ---
 $files = @('index.html')
-$dirs  = @('css', 'js')
+# gnote = 📘 기출노트 본문(과목별 HTML). 빠뜨리면 탭이 404 로 비어 보인다.
+$dirs  = @('css', 'js', 'gnote')
 
 $stage = Join-Path $env:TEMP ("imyong-ssok-deploy-" + (Get-Random))
 New-Item -ItemType Directory -Path $stage -Force | Out-Null

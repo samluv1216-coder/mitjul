@@ -19,7 +19,9 @@ body {
 }
 
 /* ---------- 헤더 ---------- */
-header {
+/* ⚠️ 'header' 그대로 쓰면 안 된다 — 📘 기출노트 본문에도 <header class="masthead"> 가
+   들어 있어서 노트 제목이 빨간 배경·흰 글씨로 바뀌어 버린다. 맨 위 앱 머리글만 집는다. */
+body > header {
   background: linear-gradient(135deg, var(--brand-dark), var(--brand));
   color: #fff; padding: 14px 20px;
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
@@ -387,3 +389,46 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 80px; }
   .cs-topic { font-size: 11.5pt; }
 }
 @page { size: A4; margin: 10mm; }
+
+/* ==========================================================
+   📘 기출노트 탭의 틀
+   노트 본문·필기·질문하기의 모양새는 css/gnote.css 가 담당한다.
+   여기는 임용쏙 쪽 껍데기(과목 고르는 줄·인쇄 분기)만 둔다.
+   ========================================================== */
+.gn-tools {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 14px; margin-bottom: 16px;
+}
+.gn-picker { display: flex; gap: 8px; flex-wrap: wrap; flex: 1 1 auto; }
+.gn-sub {
+  font: inherit; font-size: 14px; font-weight: 600; color: var(--ink);
+  background: #fff; border: 1.5px solid var(--line); border-radius: 999px;
+  padding: 8px 16px; cursor: pointer;
+}
+.gn-sub:hover { border-color: var(--brand); color: var(--brand); }
+.gn-sub.on { background: var(--brand); border-color: var(--brand); color: #fff; }
+.gn-tools .btn-secondary { padding: 8px 16px; }
+
+/* 노트 영역 — 필기 좌표와 메모지의 기준점이 된다 (position 필수) */
+.gn-root { position: relative; border-radius: 12px; overflow: visible; }
+.gn-loading { padding: 60px 20px; text-align: center; color: var(--muted); font-size: 15px; }
+
+/* 인쇄용으로 다시 그린 필기 — 화면에서는 숨긴다 */
+#pnPrintInk { position: absolute; left: 0; top: 0; pointer-events: none; display: none; z-index: 2; }
+
+@media print {
+  /* 임용쏙의 기본 인쇄는 main 을 숨기고 #printArea 만 쓴다.
+     기출노트는 반대로 본문을 그대로 찍어야 하므로 그때만 뒤집는다. */
+  body.print-gnote main { display: block !important; }
+  body.print-gnote #printArea { display: none !important; }
+  body.print-gnote .gn-tools,
+  body.print-gnote #pnCanvas,
+  body.print-gnote .pn-fab,
+  body.print-gnote .pn-bar,
+  body.print-gnote .pn-tip,
+  body.print-gnote .pn-mask,
+  body.print-gnote #mmTabs { display: none !important; }
+  /* 캔버스는 화면에 붙어 있어 첫 쪽에만 찍힌다 → SVG 로 바꿔 끼운 것을 쓴다 */
+  body.print-gnote #pnPrintInk { display: block !important; }
+}

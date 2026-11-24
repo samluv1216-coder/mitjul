@@ -1,0 +1,411 @@
+/* ──────────────────────────────────────────────────────────────
+   임용쏙 — 📘 기출노트 탭 전용 스타일
+   개인 Claude 아티팩트(가정·사서·교육학 2주 집중 노트)에서 옮겨온 것.
+   원본은 한 페이지를 통째로 쓰는 문서였으므로 body·:root·p·table 같은
+   전역 선택자를 쓰고 있었다 → 임용쏙의 다른 탭을 망가뜨리지 않도록
+   모든 규칙을 #gnoteRoot 안으로 접두해 두었다. 새 규칙을 더할 때도
+   반드시 #gnoteRoot 로 시작할 것.
+   ────────────────────────────────────────────────────────────── */
+
+/* ===== 노트 본문 ===== */
+#gnoteRoot *, #gnoteRoot *::before, #gnoteRoot *::after {box-sizing:border-box}
+#gnoteRoot {
+  --paper:#FBFAF7; --surface:#FFFFFF;
+  --ink:#1B1A18; --ink-2:#4C4945; --ink-3:#827E77;
+  --rule:#DCD7CD; --rule-soft:#EDE9E1;
+  --major:#8C2F39; --major-tint:#F7EEEE;
+  --edu:#22505C; --edu-tint:#E8F0F1;
+  --accent:var(--major); --accent-tint:var(--major-tint);
+  --serif:"Noto Serif KR","Nanum Myeongjo","Batang","바탕",Georgia,serif;
+  --sans:"Pretendard","Noto Sans KR","Malgun Gothic","맑은 고딕",system-ui,-apple-system,sans-serif;
+  --s1:4px; --s2:8px; --s3:12px; --s4:18px; --s5:26px; --s6:38px; --s7:56px;
+}
+@media (prefers-color-scheme:dark) {
+#gnoteRoot {
+    --paper:#141419; --surface:#1C1C22;
+    --ink:#E9E5DD; --ink-2:#B5B0A7; --ink-3:#8A857C;
+    --rule:#35353E; --rule-soft:#262630;
+    --major:#DE9097; --major-tint:#2B1D20;
+    --edu:#8FC3CE; --edu-tint:#16292E;
+  }
+}
+:root[data-theme="dark"] #gnoteRoot {
+  --paper:#141419; --surface:#1C1C22;
+  --ink:#E9E5DD; --ink-2:#B5B0A7; --ink-3:#8A857C;
+  --rule:#35353E; --rule-soft:#262630;
+  --major:#DE9097; --major-tint:#2B1D20;
+  --edu:#8FC3CE; --edu-tint:#16292E;
+}
+:root[data-theme="light"] #gnoteRoot {
+  --paper:#FBFAF7; --surface:#FFFFFF;
+  --ink:#1B1A18; --ink-2:#4C4945; --ink-3:#827E77;
+  --rule:#DCD7CD; --rule-soft:#EDE9E1;
+  --major:#8C2F39; --major-tint:#F7EEEE;
+  --edu:#22505C; --edu-tint:#E8F0F1;
+}
+#gnoteRoot {
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--sans); font-size:15px; line-height:1.72;
+  -webkit-font-smoothing:antialiased; word-break:keep-all;
+}
+#gnoteRoot .sheet {max-width:880px; margin:0 auto; padding:var(--s6) var(--s5) var(--s7)}
+#gnoteRoot .bar {
+  position:sticky; top:0; z-index:20;
+  display:flex; align-items:center; justify-content:space-between; gap:var(--s3);
+  padding:10px var(--s5);
+  background:color-mix(in srgb, var(--paper) 88%, transparent);
+  border-bottom:1px solid var(--rule-soft); backdrop-filter:blur(8px);
+}
+#gnoteRoot .bar span {font-size:12.5px; color:var(--ink-3)}
+#gnoteRoot .bar button {
+  font:inherit; font-size:13px; font-weight:600; padding:7px 16px;
+  border-radius:2px; cursor:pointer;
+  background:var(--ink); color:var(--paper); border:1px solid var(--ink);
+}
+#gnoteRoot .bar button:hover {opacity:.85}
+#gnoteRoot .bar button:focus-visible {outline:2px solid var(--major); outline-offset:2px}
+#gnoteRoot .masthead {border-top:3px solid var(--ink); border-bottom:1px solid var(--rule); padding:var(--s5) 0 var(--s4); margin-bottom:var(--s5)}
+#gnoteRoot .eyebrow {font-size:11px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-3)}
+#gnoteRoot .masthead h1 {font-family:var(--serif); font-size:clamp(30px,5.2vw,46px); font-weight:700; line-height:1.2; letter-spacing:-.015em; margin:var(--s3) 0 var(--s2); text-wrap:balance}
+#gnoteRoot .masthead .sub {font-family:var(--serif); font-size:17px; color:var(--ink-2); margin:0 0 var(--s4)}
+#gnoteRoot .mast-meta {display:flex; flex-wrap:wrap; gap:var(--s2) var(--s4); font-size:12.5px; color:var(--ink-3); padding-top:var(--s3); border-top:1px solid var(--rule-soft)}
+#gnoteRoot .mast-meta b {color:var(--ink-2); font-weight:600}
+#gnoteRoot .part {margin-top:var(--s7)}
+#gnoteRoot .part--major {--accent:var(--major); --accent-tint:var(--major-tint)}
+#gnoteRoot .part--edu {--accent:var(--edu); --accent-tint:var(--edu-tint)}
+#gnoteRoot .part-head {border-top:2px solid var(--accent); padding-top:var(--s3); margin-bottom:var(--s5)}
+#gnoteRoot .part-head .eyebrow {color:var(--accent)}
+#gnoteRoot .part-head h2 {font-family:var(--serif); font-size:clamp(22px,3.4vw,30px); font-weight:700; line-height:1.3; letter-spacing:-.01em; margin:var(--s2) 0 var(--s2); text-wrap:balance}
+#gnoteRoot .part-head p {margin:0; color:var(--ink-2); font-size:14.5px; max-width:64ch}
+#gnoteRoot .topic {margin-top:var(--s6)}
+#gnoteRoot .topic-head {display:flex; align-items:baseline; flex-wrap:wrap; gap:var(--s2) var(--s3); padding-bottom:var(--s2); border-bottom:1.5px solid var(--ink); margin-bottom:var(--s3); break-after:avoid}
+#gnoteRoot .topic-num {font-family:var(--serif); font-size:15px; font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums}
+#gnoteRoot .topic-head h3 {font-family:var(--serif); font-size:21px; font-weight:700; margin:0; flex:1 1 auto; line-height:1.3; letter-spacing:-.01em}
+#gnoteRoot .reps {display:inline-flex; align-items:center; gap:5px; font-size:10.5px; color:var(--ink-3); white-space:nowrap}
+#gnoteRoot .reps b {font-weight:600; letter-spacing:.06em}
+#gnoteRoot .reps u {width:13px; height:13px; border:1.2px solid var(--ink-3); display:inline-block; text-decoration:none; border-radius:1px}
+/* 집계 배지 */
+#gnoteRoot .stat {
+  display:flex; flex-wrap:wrap; gap:0; margin:0 0 var(--s4);
+  border:1px solid var(--accent); background:var(--surface); break-inside:avoid;
+}
+#gnoteRoot .stat div {flex:1 1 auto; padding:7px 12px; border-right:1px solid var(--rule-soft); min-width:104px}
+#gnoteRoot .stat div:last-child {border-right:0}
+#gnoteRoot .stat b {display:block; font-size:10px; font-weight:700; letter-spacing:.1em; color:var(--ink-3); margin-bottom:1px}
+#gnoteRoot .stat s {display:block; text-decoration:none; font-family:var(--serif); font-size:17px; font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums; line-height:1.3}
+#gnoteRoot .stat s small {font-family:var(--sans); font-size:11.5px; font-weight:600; color:var(--ink-2)}
+#gnoteRoot h4 {font-size:13.5px; font-weight:700; letter-spacing:.04em; margin:var(--s5) 0 var(--s2); color:var(--ink); break-after:avoid}
+#gnoteRoot h4::before {content:""; display:inline-block; width:12px; height:1.5px; background:var(--accent); vertical-align:middle; margin-right:8px; transform:translateY(-2px)}
+#gnoteRoot p {margin:0 0 var(--s3); max-width:68ch}
+#gnoteRoot strong {font-weight:700}
+#gnoteRoot em {font-style:normal; font-weight:700; color:var(--accent)}
+#gnoteRoot .bone {background:var(--accent-tint); border-left:2.5px solid var(--accent); padding:var(--s3) var(--s4); margin:0 0 var(--s4); font-size:14.5px; break-inside:avoid}
+#gnoteRoot .bone p:last-child {margin-bottom:0}
+#gnoteRoot ul, #gnoteRoot ol {margin:0 0 var(--s3); padding-left:1.25em}
+#gnoteRoot li {margin-bottom:6px; max-width:66ch}
+#gnoteRoot li::marker {color:var(--ink-3)}
+#gnoteRoot ul.tight li {margin-bottom:2px}
+#gnoteRoot dl {margin:0 0 var(--s3)}
+#gnoteRoot dt {font-weight:700; font-size:14px; margin-top:var(--s3); color:var(--ink)}
+#gnoteRoot dt:first-child {margin-top:0}
+#gnoteRoot dd {margin:2px 0 0; color:var(--ink-2); font-size:14px; max-width:66ch}
+#gnoteRoot .hot {border:1px solid var(--accent); padding:var(--s3) var(--s4); margin:var(--s4) 0; break-inside:avoid; background:var(--surface)}
+#gnoteRoot .hot-label {display:block; font-size:11px; font-weight:700; letter-spacing:.14em; color:var(--accent); margin-bottom:var(--s2)}
+#gnoteRoot .hot ul {margin-bottom:0}
+#gnoteRoot .hot li {font-size:14px}
+#gnoteRoot .trap {border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); padding:var(--s3) 0; margin:var(--s4) 0; break-inside:avoid}
+#gnoteRoot .trap-label {display:block; font-size:11px; font-weight:700; letter-spacing:.14em; color:var(--ink-3); margin-bottom:6px}
+#gnoteRoot .trap p, #gnoteRoot .trap li {font-size:13.5px; color:var(--ink-2)}
+#gnoteRoot .trap ul {margin-bottom:0}
+#gnoteRoot .tablewrap {overflow-x:auto; margin:var(--s3) 0 var(--s4)}
+#gnoteRoot table {border-collapse:collapse; width:100%; font-size:13.5px; line-height:1.55}
+#gnoteRoot thead {display:table-header-group}
+#gnoteRoot th, #gnoteRoot td {text-align:left; vertical-align:top; padding:7px 10px; border-bottom:1px solid var(--rule-soft)}
+#gnoteRoot th {font-size:11.5px; font-weight:700; letter-spacing:.06em; color:var(--ink-3); border-bottom:1px solid var(--ink); white-space:nowrap}
+#gnoteRoot tbody tr {break-inside:avoid}
+#gnoteRoot td.k {font-weight:600; color:var(--ink); white-space:nowrap}
+#gnoteRoot .num {font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap}
+#gnoteRoot tr.tot td {border-top:1.5px solid var(--ink); font-weight:700; color:var(--ink)}
+#gnoteRoot .yr {font-variant-numeric:tabular-nums; white-space:nowrap; color:var(--accent); font-weight:700}
+/* 막대 */
+#gnoteRoot .bar-cell {min-width:118px}
+#gnoteRoot .bar-track {display:block; height:9px; background:var(--rule-soft); position:relative; margin-top:4px}
+#gnoteRoot .bar-fill {position:absolute; left:0; top:0; height:100%; background:var(--accent)}
+/* 기출 문항별 해설표 */
+#gnoteRoot table.q {font-size:13px; line-height:1.5}
+#gnoteRoot table.q td {padding:8px 9px; border-bottom:1px solid var(--rule-soft)}
+#gnoteRoot table.q td.q-no {
+  white-space:nowrap; width:62px; font-family:var(--serif); font-weight:700;
+  color:var(--accent); font-variant-numeric:tabular-nums; vertical-align:top;
+}
+#gnoteRoot table.q td.q-no small {display:block; font-family:var(--sans); font-size:10px; font-weight:600; color:var(--ink-3); letter-spacing:.04em}
+#gnoteRoot table.q td.q-ask {width:34%; color:var(--ink); vertical-align:top}
+#gnoteRoot table.q td.q-know {color:var(--ink-2); vertical-align:top}
+#gnoteRoot table.q td.q-know b {color:var(--ink); font-weight:700}
+#gnoteRoot table.q tr.yr-sep td {border-top:1.5px solid var(--ink); padding-top:10px}
+#gnoteRoot .q-head {
+  display:flex; align-items:baseline; gap:8px; margin:var(--s4) 0 var(--s2);
+  font-size:11px; font-weight:700; letter-spacing:.1em; color:var(--accent);
+}
+#gnoteRoot .q-head span {flex:1 1 auto; height:1px; background:var(--rule)}
+#gnoteRoot .note {font-size:12.5px; color:var(--ink-3); border-left:2px solid var(--rule); padding-left:var(--s3); margin:var(--s4) 0; max-width:64ch}
+#gnoteRoot .note b {color:var(--ink-2)}
+#gnoteRoot .checklist {list-style:none; padding:0; margin:var(--s3) 0; columns:2; column-gap:var(--s5)}
+#gnoteRoot .checklist li {margin:0 0 7px; font-size:13.5px; break-inside:avoid; padding-left:22px; position:relative}
+#gnoteRoot .checklist li::before {content:""; position:absolute; left:0; top:4px; width:13px; height:13px; border:1.2px solid var(--ink-3); border-radius:1px}
+#gnoteRoot .colophon {margin-top:var(--s7); padding-top:var(--s3); border-top:1px solid var(--rule); font-size:12px; color:var(--ink-3)}
+@media print {
+#gnoteRoot {
+    --paper:#FFFFFF; --surface:#FFFFFF;
+    --ink:#000000; --ink-2:#2E2E2E; --ink-3:#5E5E5E;
+    --rule:#A8A8A8; --rule-soft:#D2D2D2;
+    --major:#7E2630; --major-tint:#F2EAEA;
+    --edu:#1C4651; --edu-tint:#E6EEEF;
+  }
+#gnoteRoot, #gnoteRoot {background:#fff}
+#gnoteRoot {font-size:10.2pt; line-height:1.58}
+#gnoteRoot .noprint {display:none !important}
+#gnoteRoot .sheet {max-width:none; margin:0; padding:0}
+#gnoteRoot .part {break-before:page; margin-top:0}
+#gnoteRoot .part:first-of-type {break-before:auto}
+#gnoteRoot .masthead {break-after:page}
+#gnoteRoot h4, #gnoteRoot .topic-head, #gnoteRoot .part-head {break-after:avoid}
+#gnoteRoot p, #gnoteRoot li {orphans:2; widows:2}
+#gnoteRoot table, #gnoteRoot .hot, #gnoteRoot .trap, #gnoteRoot .bone, #gnoteRoot .stat, #gnoteRoot tr {break-inside:avoid}
+#gnoteRoot a {color:inherit; text-decoration:none}
+#gnoteRoot .masthead h1 {font-size:25pt}
+#gnoteRoot .part-head h2 {font-size:16.5pt}
+#gnoteRoot .topic-head h3 {font-size:13pt}
+}
+@media (max-width:640px) {
+#gnoteRoot .sheet {padding:var(--s5) var(--s4) var(--s6)}
+#gnoteRoot .checklist {columns:1}
+#gnoteRoot .stat div {min-width:50%}
+}
+@media (prefers-reduced-motion:reduce) {
+#gnoteRoot * {animation:none !important; transition:none !important}
+}
+
+/* ===== 과목별 색 (기본값은 가정·교육학) ===== */
+#gnoteRoot.s-lib { --major:#1F4E5F; --major-tint:#EAF1F3; --edu:#8A5A1C; --edu-tint:#F6EEE2; }
+@media (prefers-color-scheme:dark){ #gnoteRoot.s-lib { --major:#8FC2CE; --major-tint:#2A2012; --edu:#D9A75A; --edu-tint:#2A2012; } }
+:root[data-theme="dark"] #gnoteRoot.s-lib { --major:#8FC2CE; --major-tint:#2A2012; --edu:#D9A75A; --edu-tint:#2A2012; }
+:root[data-theme="light"] #gnoteRoot.s-lib { --major:#1F4E5F; --major-tint:#EAF1F3; --edu:#8A5A1C; --edu-tint:#F6EEE2; }
+@media print{ #gnoteRoot.s-lib { --major:#1A4452; --major-tint:#E6EEF0; --edu:#7A4E14; --edu-tint:#F3EADC; } }
+
+/* ===== 필기 ===== */
+#gnoteRoot #pnCanvas { position:fixed; inset:0; z-index:8500; pointer-events:none; touch-action:none }
+#gnoteRoot.pn-on #pnCanvas { pointer-events:auto }
+#gnoteRoot #mmLayer { position:absolute; left:0; top:0; width:100%; height:0; z-index:8600; pointer-events:none }
+#gnoteRoot .mm {
+  position:absolute; pointer-events:auto; width:250px; min-height:120px;
+  display:flex; flex-direction:column; border-radius:3px;
+  box-shadow:0 4px 16px rgba(0,0,0,.22); border:1px solid rgba(0,0,0,.14);
+}
+#gnoteRoot .mm-h {
+  display:flex; align-items:center; gap:3px; padding:5px 5px 5px 8px;
+  cursor:grab; touch-action:none; border-bottom:1px solid rgba(0,0,0,.10);
+}
+#gnoteRoot .mm-t {
+  flex:1 1 auto; min-width:0; border:0; background:transparent; outline:none;
+  font:inherit; font-size:11.5px; font-weight:700; letter-spacing:.03em;
+  color:rgba(0,0,0,.55); padding:3px 2px; border-radius:2px;
+}
+#gnoteRoot .mm-t:focus { background:rgba(255,255,255,.6); color:rgba(0,0,0,.8) }
+#gnoteRoot .mm-h button {
+  flex:0 0 auto; border:0; background:rgba(0,0,0,.07); cursor:pointer; font:inherit; font-size:11.5px;
+  width:23px; height:23px; border-radius:3px; color:rgba(0,0,0,.6); line-height:1; padding:0;
+}
+#gnoteRoot .mm-h button:hover { background:rgba(0,0,0,.18) }
+#gnoteRoot .mm textarea {
+  flex:1 1 auto; border:0; background:transparent; resize:none; outline:none;
+  font:inherit; font-size:13.5px; line-height:1.6; color:#1a1a1a;
+  padding:8px 9px; min-height:70px;
+}
+#gnoteRoot .mm-rz {
+  position:absolute; right:0; bottom:0; width:30px; height:30px; cursor:nwse-resize;
+  touch-action:none; background:linear-gradient(135deg,transparent 42%,rgba(0,0,0,.30) 46%,transparent 52%,rgba(0,0,0,.30) 58%,transparent 64%);
+}
+#gnoteRoot.pn-on .mm { opacity:.35 }
+/* 접어 두면 오른쪽 가장자리에 제목 탭으로 */
+#gnoteRoot #mmTabs {
+  position:fixed; right:0; top:92px; z-index:8700;
+  display:flex; flex-direction:column; align-items:flex-end; gap:6px;
+  max-height:58dvh; overflow-y:auto; pointer-events:none;
+}
+#gnoteRoot .mm-tab {
+  pointer-events:auto; display:flex; align-items:center; gap:7px;
+  max-width:min(300px, 56vw); padding:8px 11px 8px 13px;
+  border:1px solid rgba(0,0,0,.16); border-right:0; border-radius:4px 0 0 4px;
+  box-shadow:-2px 2px 12px rgba(0,0,0,.2); cursor:pointer;
+  font:inherit; font-size:12.5px; font-weight:700; color:#1a1a1a; text-align:left;
+}
+#gnoteRoot .mm-tab span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+#gnoteRoot .mm-tab::before { content:'▸'; flex:0 0 auto; opacity:.5; font-size:11px }
+#gnoteRoot .mm-tab:hover { padding-right:16px }
+#gnoteRoot.pn-on #mmTabs { opacity:.4 }
+#gnoteRoot .pn-fab {
+  position:fixed; right:16px; bottom:72px; z-index:9000;
+  display:inline-flex; align-items:center; gap:7px;
+  padding:11px 16px; border-radius:999px; cursor:pointer;
+  font:inherit; font-size:14.5px; font-weight:700;
+  background:var(--surface); color:var(--ink); border:1px solid var(--rule);
+  box-shadow:0 4px 18px rgba(0,0,0,.18);
+}
+#gnoteRoot .pn-fab.on { background:var(--major); color:#fff; border-color:var(--major) }
+#gnoteRoot .pn-bar {
+  position:fixed; left:50%; transform:translateX(-50%); bottom:16px; z-index:9050; display:none;
+  align-items:center; gap:5px; flex-wrap:wrap; justify-content:center;
+  padding:8px 10px; max-width:calc(100vw - 20px);
+  background:var(--surface); border:1px solid var(--rule); border-radius:999px;
+  box-shadow:0 6px 24px rgba(0,0,0,.22);
+}
+#gnoteRoot .pn-bar.on { display:flex }
+#gnoteRoot .pn-bar button {
+  font:inherit; font-size:13px; font-weight:600; cursor:pointer;
+  padding:7px 10px; border:1px solid var(--rule); border-radius:999px;
+  background:var(--paper); color:var(--ink-2); line-height:1;
+}
+#gnoteRoot .pn-bar button.sel { border-color:var(--ink); background:var(--ink); color:var(--paper) }
+#gnoteRoot .pn-bar button.warn { border-color:#C62828; color:#C62828 }
+#gnoteRoot .pn-bar .pn-sw { width:30px; height:30px; padding:0; border-radius:50% }
+#gnoteRoot .pn-bar .pn-sw.sel { outline:2.5px solid var(--ink); outline-offset:2px; border-color:transparent }
+#gnoteRoot .pn-sep { width:1px; height:22px; background:var(--rule); margin:0 3px }
+#gnoteRoot .pn-tip {
+  position:fixed; left:50%; transform:translateX(-50%); bottom:62px; z-index:9060;
+  display:none; padding:7px 13px; border-radius:999px; max-width:86vw;
+  background:var(--ink); color:var(--paper); font-size:12.5px; text-align:center;
+}
+#gnoteRoot .pn-tip.on { display:block }
+#gnoteRoot .pn-mask {
+  position:fixed; inset:0; z-index:9200; display:none;
+  align-items:center; justify-content:center; padding:18px;
+  background:rgba(0,0,0,.45);
+}
+#gnoteRoot .pn-mask.on { display:flex }
+#gnoteRoot .pn-box {
+  width:min(560px,100%); max-height:86dvh; overflow:auto;
+  background:var(--paper); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 16px 14px; box-shadow:0 12px 40px rgba(0,0,0,.3);
+}
+#gnoteRoot .pn-box h4 { margin:0 0 6px; font-family:var(--serif); font-size:17px }
+#gnoteRoot .pn-box h4::before { content:none }
+#gnoteRoot .pn-box p { margin:0 0 10px; font-size:13px; color:var(--ink-2) }
+#gnoteRoot .pn-box textarea {
+  width:100%; height:150px; resize:vertical; font-size:12px; line-height:1.5;
+  font-family:ui-monospace,Menlo,Consolas,monospace;
+  padding:8px; border:1px solid var(--rule); border-radius:3px;
+  background:var(--surface); color:var(--ink);
+}
+#gnoteRoot .pn-row { display:flex; gap:7px; flex-wrap:wrap; margin-top:10px }
+#gnoteRoot .pn-row button {
+  font:inherit; font-size:13.5px; font-weight:600; cursor:pointer;
+  padding:9px 14px; border-radius:3px; border:1px solid var(--rule);
+  background:var(--surface); color:var(--ink);
+}
+#gnoteRoot .pn-row button.pri { background:var(--ink); color:var(--paper); border-color:var(--ink) }
+@media print {
+#gnoteRoot #pnCanvas, #gnoteRoot #mmLayer, #gnoteRoot #mmTabs, #gnoteRoot .pn-fab, #gnoteRoot .pn-bar, #gnoteRoot .pn-tip, #gnoteRoot .pn-mask { display:none !important }
+}
+
+/* ===== 질문하기 ===== */
+#gnoteRoot .tt-fab {
+  position:fixed; right:16px; bottom:16px; z-index:9000;
+  display:none; align-items:center; gap:8px;
+  padding:12px 18px; border:0; border-radius:999px; cursor:pointer;
+  font:inherit; font-size:15px; font-weight:700;
+  background:var(--ink); color:var(--paper);
+  box-shadow:0 6px 24px rgba(0,0,0,.28);
+}
+#gnoteRoot .tt-fab.on {display:inline-flex}
+#gnoteRoot .tt-fab:focus-visible {outline:2px solid var(--major); outline-offset:3px}
+#gnoteRoot .tt-wrap {
+  position:fixed; left:0; right:0; bottom:0; z-index:9100;
+  display:none; flex-direction:column;
+  height:var(--tt-h, 46dvh);
+  min-height:112px; max-height:92dvh;
+  background:var(--paper);
+  border-top:2px solid var(--major);
+  box-shadow:0 -10px 40px rgba(0,0,0,.25);
+}
+#gnoteRoot .tt-wrap.on {display:flex}
+/* 아이패드 가로·데스크톱에서만 떠 있는 창으로 */
+@media (min-width:1024px) {
+#gnoteRoot .tt-wrap {left:auto; right:16px; bottom:16px; width:440px; border:1px solid var(--rule); border-top:2px solid var(--major); border-radius:4px}
+}
+/* 끌어서 크기 조절하는 손잡이 */
+#gnoteRoot .tt-grab {
+  flex:0 0 auto; height:22px; cursor:ns-resize; touch-action:none;
+  display:flex; align-items:center; justify-content:center;
+}
+#gnoteRoot .tt-grab::before {
+  content:''; width:46px; height:4px; border-radius:999px; background:var(--rule);
+}
+#gnoteRoot .tt-grab:hover::before {background:var(--major)}
+#gnoteRoot .tt-head {
+  display:flex; align-items:center; gap:6px;
+  padding:0 10px 10px 14px; border-bottom:1px solid var(--rule-soft); flex:0 0 auto;
+}
+#gnoteRoot .tt-head b {font-family:var(--serif); font-size:15.5px; flex:1 1 auto}
+#gnoteRoot .tt-head small {font-size:11px; color:var(--ink-3)}
+#gnoteRoot .tt-x {border:0; background:none; cursor:pointer; font:inherit; font-size:19px; color:var(--ink-3); padding:4px 8px; line-height:1; border-radius:3px}
+#gnoteRoot .tt-x:hover {color:var(--ink); background:var(--rule-soft)}
+#gnoteRoot .tt-sz {
+  border:1px solid var(--rule); background:var(--surface); color:var(--ink-2);
+  cursor:pointer; font:inherit; font-size:11.5px; font-weight:600;
+  padding:5px 9px; border-radius:3px; white-space:nowrap;
+}
+#gnoteRoot .tt-sz:hover {border-color:var(--major); color:var(--major)}
+/* 접힌 상태 — 입력칸만 남긴다 */
+#gnoteRoot .tt-wrap.tt-min .tt-log, #gnoteRoot .tt-wrap.tt-min .tt-chips, #gnoteRoot .tt-wrap.tt-min .tt-note {display:none}
+#gnoteRoot .tt-wrap.tt-min .tt-head {border-bottom:0; padding-bottom:4px}
+#gnoteRoot .tt-log {flex:1 1 auto; overflow-y:auto; padding:14px; -webkit-overflow-scrolling:touch}
+#gnoteRoot .tt-msg {margin:0 0 14px; font-size:14.5px; line-height:1.68; max-width:none}
+#gnoteRoot .tt-msg.me {
+  background:var(--accent-tint); border-left:2.5px solid var(--major);
+  padding:9px 12px; white-space:pre-wrap; font-weight:600;
+}
+#gnoteRoot .tt-msg.ai {color:var(--ink-2)}
+#gnoteRoot .tt-msg.ai b {color:var(--ink)}
+#gnoteRoot .tt-msg.ai ul {margin:6px 0 8px; padding-left:1.15em}
+#gnoteRoot .tt-msg.ai li {margin:0 0 3px; font-size:14px}
+#gnoteRoot .tt-msg.ai code {
+  font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.9em;
+  background:var(--rule-soft); padding:1px 5px; border-radius:2px;
+}
+#gnoteRoot .tt-msg.err {color:var(--major); font-size:13.5px; font-weight:600}
+#gnoteRoot .tt-acts {display:flex; gap:6px; margin-top:9px}
+#gnoteRoot .tt-act {
+  font:inherit; font-size:12px; font-weight:600; cursor:pointer;
+  padding:6px 11px; border:1px solid var(--rule); border-radius:999px;
+  background:var(--surface); color:var(--ink-2);
+}
+#gnoteRoot .tt-act:hover {border-color:var(--major); color:var(--major)}
+#gnoteRoot .tt-act[disabled] {opacity:.55; cursor:default}
+#gnoteRoot .tt-think {color:var(--ink-3); font-size:13.5px; font-style:normal}
+#gnoteRoot .tt-think::after {content:'';display:inline-block;width:1em;text-align:left;animation:ttDot 1.2s steps(4,end) infinite}
+@keyframes ttDot {0%{content:''}25%{content:'·'}50%{content:'··'}75%{content:'···'}}
+#gnoteRoot .tt-chips {display:flex; flex-wrap:wrap; gap:6px; padding:0 14px 10px; flex:0 0 auto}
+#gnoteRoot .tt-chip {
+  font:inherit; font-size:12.5px; cursor:pointer;
+  padding:6px 11px; border:1px solid var(--rule); border-radius:999px;
+  background:var(--surface); color:var(--ink-2);
+}
+#gnoteRoot .tt-chip:hover {border-color:var(--major); color:var(--major)}
+#gnoteRoot .tt-bar {display:flex; gap:8px; padding:10px 14px 14px; border-top:1px solid var(--rule-soft); flex:0 0 auto}
+#gnoteRoot .tt-in {
+  flex:1 1 auto; font:inherit; font-size:15px; line-height:1.5;
+  padding:10px 12px; border:1px solid var(--rule); border-radius:3px;
+  background:var(--surface); color:var(--ink); resize:none; min-height:44px; max-height:140px;
+}
+#gnoteRoot .tt-in:focus {outline:2px solid var(--major); outline-offset:-1px; border-color:var(--major)}
+#gnoteRoot .tt-send {
+  font:inherit; font-size:14px; font-weight:700; cursor:pointer;
+  padding:0 16px; border:1px solid var(--ink); border-radius:3px;
+  background:var(--ink); color:var(--paper); flex:0 0 auto;
+}
+#gnoteRoot .tt-send[disabled] {opacity:.45; cursor:default}
+#gnoteRoot .tt-note {padding:0 14px 10px; font-size:11.5px; color:var(--ink-3); flex:0 0 auto}
+@media print {
+#gnoteRoot .tt-fab, #gnoteRoot .tt-wrap {display:none !important}
+}

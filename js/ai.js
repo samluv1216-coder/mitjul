@@ -287,3 +287,117 @@ async function testConnection() {
   const txt = await callAI('간단한 연결 테스트입니다.', '"OK"라고만 답하세요.', 16);
   return /ok/i.test(txt);
 }
+
+/* ==========================================================
+   대화형 호출 (📘 기출노트의 「질문하기」)
+   callAI 는 1턴·비스트리밍·중단불가라 과외 대화에 쓸 수 없다.
+   - turns: [{role:'user'|'assistant', content}]  (system 은 따로 넘김)
+   - onText(누적문자열) 로 흘러오는 대로 그려 준다
+   - signal 로 「중단」 버튼 지원
+   스트리밍이 막힌 환경(프록시·확장프로그램)에서는 한 번에 받아 폴백한다.
+   ========================================================== */
+async function callChatStream(system, turns, opts) {
+  opts = opts || {};
+  const onText = opts.onText || function () {};
+  const signal = opts.signal;
+  const maxTokens = opts.maxTokens || 2048;
+  const s = getSettings();
+  const p = s.provider;
+  const key = (s.keys[p] || '').trim();
+  if (!key) throw new Error('NOKEY');
+  const model = resolveModel(p);
+
+  let url, headers, body, pick, cut;
+
+  if (p === 'claude') {
+    url = 'https://api.anthropic.com/v1/messages';
+    headers = {
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    };
+    body = { model, max_tokens: maxTokens, system, messages: turns, stream: true };
+    // content_block_delta 의 text 만 모은다
+    pick = j => (j.type === 'content_block_delta' && j.delta && j.delta.text) || '';
+    cut = j => j.type === 'message_delta' && j.delta && j.delta.stop_reason === 'max_tokens';
+  } else if (p === 'gemini') {
+    url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
+    headers = { 'content-type': 'application/json', 'x-goog-api-key': key };
+    body = {
+      systemInstruction: { parts: [{ text: system }] },
+      contents: turns.map(t => ({ role: t.role === 'assistant' ? 'model' : 'user', parts: [{ text: t.content }] })),
+      generationConfig: { maxOutputTokens: maxTokens, temperature: 0.4 },
+    };
+    pick = j => ((j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [])
+      .map(x => x.text || '').join('');
+    cut = j => !!(j.candidates && j.candidates[0] && j.candidates[0].finishReason === 'MAX_TOKENS');
+  } else {
+    url = 'https://api.openai.com/v1/chat/completions';
+    headers = { 'content-type': 'application/json', 'Authorization': 'Bearer ' + key };
+    body = {
+      model, max_tokens: maxTokens, stream: true,
+      messages: [{ role: 'system', content: system }].concat(turns),
+    };
+    pick = j => (j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content) || '';
+    cut = j => !!(j.choices && j.choices[0] && j.choices[0].finish_reason === 'length');
+  }
+
+  const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal });
+  if (!res.ok) throw await apiError(res, p === 'claude' ? 'Claude' : p === 'gemini' ? 'Gemini' : 'OpenAI');
+
+  // 스트리밍을 못 읽는 환경이면 통째로 받아서 같은 파서로 긁는다
+  if (!res.body || !res.body.getReader) {
+    const whole = await res.text();
+    const got = sseScrape(whole, pick, cut);
+    onText(got.text);
+    return got;
+  }
+
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = '', text = '', truncated = false;
+  for (;;) {
+    const r = await reader.read();
+    if (r.done) break;
+    buf += dec.decode(r.value, { stream: true });
+    // SSE 는 빈 줄로 이벤트가 끊긴다. 마지막 미완성 조각은 남겨 둔다.
+    const events = buf.split(/\r?\n\r?\n/);
+    buf = events.pop();
+    for (const ev of events) {
+      for (const line of ev.split(/\r?\n/)) {
+        if (!line.startsWith('data:')) continue;
+        const raw = line.slice(5).trim();
+        if (!raw || raw === '[DONE]') continue;
+        let j; try { j = JSON.parse(raw); } catch (e) { continue; }
+        if (j.type === 'error' || j.error) {
+          const m = (j.error && (j.error.message || j.error.status)) || 'stream error';
+          throw new Error(String(m));
+        }
+        if (cut && cut(j)) truncated = true;
+        const piece = pick(j);
+        if (piece) { text += piece; onText(text); }
+      }
+    }
+  }
+  if (buf) {
+    const rest = sseScrape(buf, pick, cut);
+    if (rest.truncated) truncated = true;
+    if (rest.text) { text += rest.text; onText(text); }
+  }
+  return { text, truncated };
+}
+
+// 남은 버퍼·비스트리밍 응답에서 data: 줄을 긁어모은다
+function sseScrape(s, pick, cut) {
+  let text = '', truncated = false;
+  for (const line of String(s).split(/\r?\n/)) {
+    if (!line.startsWith('data:')) continue;
+    const raw = line.slice(5).trim();
+    if (!raw || raw === '[DONE]') continue;
+    let j; try { j = JSON.parse(raw); } catch (e) { continue; }
+    if (cut && cut(j)) truncated = true;
+    text += pick(j) || '';
+  }
+  return { text, truncated };
+}

@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>임용쏙 — 가정 임용시험 AI 문제풀이</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>📝</text></svg>">
-<link rel="stylesheet" href="css/styles.css?v=9">
+<link rel="stylesheet" href="css/styles.css?v=10">
+<link rel="stylesheet" href="css/gnote.css?v=10">
 </head>
 <body>
 
@@ -23,6 +24,7 @@
   <button class="tab-btn" data-tab="stats">📊 학습통계</button>
   <button class="tab-btn" data-tab="notes">📕 오답노트</button>
   <button class="tab-btn" data-tab="concepts">📚 개념노트</button>
+  <button class="tab-btn" data-tab="gnote">📘 기출노트</button>
   <button class="tab-btn" data-tab="trends">📰 교육 트렌드</button>
   <button class="tab-btn" data-tab="guide">📖 가이드</button>
 </nav>
@@ -97,6 +99,80 @@
 <!-- ========== 개념노트 ========== -->
 <section class="view" id="view-concepts">
   <div id="conceptsBody"></div>
+</section>
+
+<!-- ========== 기출노트 (5개년 집계 노트 · 필기 · 질문하기) ========== -->
+<section class="view" id="view-gnote">
+  <div class="gn-tools">
+    <div class="gn-picker" id="gnotePicker"></div>
+    <button class="btn-secondary" id="gnotePrint">🖨️ 인쇄 · PDF</button>
+  </div>
+
+  <!-- 노트 본문·필기·질문하기는 모두 #gnoteRoot 안에 둔다.
+       ① gnote.css 의 모든 규칙이 #gnoteRoot 로 접두되어 있고
+       ② 메모지(#mmLayer)가 이 요소 기준으로 자리를 잡으며
+       ③ 다른 탭으로 가면 .view 가 숨겨져 떠 있는 버튼들도 같이 사라진다 -->
+  <div class="gn-root" id="gnoteRoot">
+    <div id="gnoteSheet"></div>
+    <div id="pnPrintInk"></div>
+
+    <!-- ░░ 필기 (펜·메모지) ░░ -->
+    <canvas id="pnCanvas"></canvas>
+    <div id="mmLayer"></div>
+    <div id="mmTabs"></div>
+    <button type="button" class="pn-fab" id="pnFab">✏️ 필기</button>
+
+    <div class="pn-bar" id="pnBar">
+      <button type="button" class="pn-sw" id="pnC1" style="background:#1B1A18" title="검정"></button>
+      <button type="button" class="pn-sw" id="pnC2" style="background:#C62828" title="빨강"></button>
+      <button type="button" class="pn-sw" id="pnC3" style="background:#1565C0" title="파랑"></button>
+      <button type="button" class="pn-sw" id="pnC4" style="background:#FFE082" title="형광"></button>
+      <span class="pn-sep"></span>
+      <button type="button" id="pnEraser">지우개</button>
+      <button type="button" id="pnUndo">되돌리기</button>
+      <span class="pn-sep"></span>
+      <button type="button" id="pnMemo">📝 메모지</button>
+      <button type="button" id="pnFinger">손가락 끄기</button>
+      <button type="button" id="pnClear">전체 지우기</button>
+      <button type="button" id="pnIO">내보내기</button>
+    </div>
+    <div class="pn-tip" id="pnTip"></div>
+
+    <div class="pn-mask" id="pnMask">
+      <div class="pn-box">
+        <h4>필기·메모 내보내기 / 가져오기</h4>
+        <p><b>저장은 자동입니다</b> — 이 창은 다른 기기로 옮기거나 백업할 때만 쓰면 됩니다.
+           아래 글을 전부 복사해 두세요. 반대로 복사해 둔 글을 넣고 「가져오기」를 누르면 되돌립니다.
+           <b>과목마다 따로 저장</b>되니 지금 보고 있는 과목의 것만 담깁니다.</p>
+        <textarea id="pnIOText" spellcheck="false"></textarea>
+        <div class="pn-row">
+          <button type="button" class="pri" id="pnCopy">복사하기</button>
+          <button type="button" id="pnImport">가져오기</button>
+          <button type="button" id="pnMaskClose">닫기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ░░ 질문하기 (AI 과외) ░░ -->
+    <button type="button" class="tt-fab" id="ttFab" aria-label="질문하기">🙋 질문하기</button>
+
+    <div class="tt-wrap" id="ttWrap" role="dialog" aria-label="질문하기">
+      <div class="tt-grab" id="ttGrab" title="위아래로 끌어 크기를 조절하세요"></div>
+      <div class="tt-head">
+        <b>🙋 질문하기</b>
+        <small id="ttTier"></small>
+        <button type="button" class="tt-sz" id="ttSize">접기</button>
+        <button type="button" class="tt-x" id="ttClose" aria-label="닫기">✕</button>
+      </div>
+      <div class="tt-log" id="ttLog"></div>
+      <div class="tt-chips" id="ttChips"></div>
+      <div class="tt-bar">
+        <textarea class="tt-in" id="ttIn" rows="1" placeholder="궁금한 걸 물어보세요"></textarea>
+        <button type="button" class="tt-send" id="ttSend">보내기</button>
+      </div>
+      <div class="tt-note">답은 AI가 생성한 것이라 틀릴 수 있습니다. 중요한 수치·법령·교육과정 문구는 원문으로 확인하세요.</div>
+    </div>
+  </div>
 </section>
 
 <!-- ========== 교육 트렌드 ========== -->
@@ -222,7 +298,7 @@
     <div class="field">
       <label>모델 (선택한 제공자용, 비우면 기본값)</label>
       <input type="text" id="modelInput" placeholder="비우면 기본값: claude-sonnet-4-6">
-      <div class="hint">기본값 — Claude: claude-sonnet-4-6 / Gemini: gemini-2.0-flash / OpenAI: gpt-4o</div>
+      <div class="hint">기본값 — Claude: claude-sonnet-4-6 / Gemini: gemini-3.8-flash / OpenAI: gpt-4o</div>
     </div>
     <div class="check-row">
       <input type="checkbox" id="chkVerify" checked>
@@ -238,11 +314,13 @@
   </div>
 </div>
 
-<script src="js/topics.js?v=9"></script>
-<script src="js/settings.js?v=9"></script>
-<script src="js/ai.js?v=9"></script>
-<script src="js/trends.js?v=9"></script>
-<script src="js/concepts.js?v=9"></script>
-<script src="js/app.js?v=9"></script>
+<script src="js/topics.js?v=10"></script>
+<script src="js/settings.js?v=10"></script>
+<script src="js/ai.js?v=10"></script>
+<script src="js/trends.js?v=10"></script>
+<script src="js/concepts.js?v=10"></script>
+<script src="js/gnote-data.js?v=10"></script>
+<script src="js/gnote.js?v=10"></script>
+<script src="js/app.js?v=10"></script>
 </body>
 </html>
