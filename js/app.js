@@ -711,6 +711,12 @@ function openSettings() {
   $('keyOpenai').value = s.keys.openai || '';
   $('modelInput').value = s.models[s.provider] || '';
   $('chkVerify').checked = s.verify;
+  // 옛 모델 이름을 자동으로 비웠으면 한 번 알려 준다 — 안 알려 주면
+  // 적어 둔 값이 그냥 사라진 것처럼 보여 고장으로 오해한다.
+  const fix = takeModelFixNotice();
+  const fixEl = $('modelFixNote');
+  if (fix) { fixEl.textContent = fix; fixEl.classList.remove('hidden'); }
+  else if (fixEl.textContent === '') { fixEl.classList.add('hidden'); }
   $('testResult').textContent = '';
   $('backupResult').textContent = '지금 쌓인 기록 — ' + backupSummary(collectBackup());
   $('settingsModal').classList.remove('hidden');
