@@ -68,6 +68,117 @@ function exportBackup() {
     '\n(API 키는 안전을 위해 빠져 있습니다)';
 }
 
+/* ──────────────────────────────────────────────────────────
+   옛 주소 → 새 주소 한 번에 옮기기
+
+   파일을 내려받았다 다시 올리는 게 번거로워서 만든 길.
+   옛 주소에서 버튼을 누르면 기록을 주소 뒤 `#` 조각에 실어 새 주소로 넘어가고,
+   새 주소가 그걸 읽어 저장한 뒤 주소를 즉시 깨끗하게 지운다.
+
+   ⚠️ 처음엔 창을 새로 열어 postMessage 로 건네려 했는데 그만뒀다.
+      팝업이 막히거나, 어떤 환경에서는 window.open 이 새 창을 띄우지 않고
+      **같은 탭을 그냥 이동**시켜 버린다(실제로 겪음). 그러면 opener 가 없어
+      주고받기가 조용히 실패하고 옛 탭까지 사라진다.
+   ⚠️ iframe 으로 남의 주소 저장소를 읽는 방법도 안 된다 — 요즘 브라우저는
+      끼워 넣은 iframe 의 저장소를 따로 떼어 둬서(storage partitioning) 빈 값이 온다.
+   `#` 조각은 서버로 전송되지 않으므로 기록이 밖으로 새지 않는다(API 키는 애초에 빠져 있다).
+   ────────────────────────────────────────────────────────── */
+const HANDOFF_OLD = 'imyong-ssok.samluv.workers.dev';
+const HANDOFF_NEW = 'mitjul.samluv.workers.dev';
+
+// 이 창이 보내는 쪽인지 받는 쪽인지
+// (localhost 는 시험용 — 8803 을 옛 주소, 8802 를 새 주소로 본다)
+function handoffRole() {
+  const h = location.hostname, p = location.port;
+  if (h === HANDOFF_OLD) return 'old';
+  if (h === HANDOFF_NEW) return 'new';
+  if (h === 'localhost' || h === '127.0.0.1') {
+    if (p === '8803') return 'old';
+    if (p === '8802') return 'new';
+  }
+  return null;
+}
+function handoffPeerOrigin(role) {
+  const h = location.hostname;
+  if (h === 'localhost' || h === '127.0.0.1') return location.protocol + '//' + h + ':' + (role === 'old' ? '8802' : '8803');
+  return 'https://' + (role === 'old' ? HANDOFF_NEW : HANDOFF_OLD);
+}
+
+const HANDOFF_DONE_KEY = 'gn_handoff_done_v1';
+const HANDOFF_MAX = 1500000;   // 주소에 실을 수 있는 현실적인 한계 (약 1.5MB)
+
+function startHandoff(statusEl) {
+  const data = collectBackup();
+  if (!Object.keys(data).length) { statusEl.textContent = '옮길 기록이 없습니다.'; return; }
+
+  const payload = encodeURIComponent(JSON.stringify(data));
+  if (payload.length > HANDOFF_MAX) {
+    statusEl.textContent = '❌ 기록이 너무 커서(주로 필기) 이 방법으로는 못 옮깁니다.\n' +
+      '아래 ⚙️ 설정 → 「⬇️ 내보내기」로 파일을 받아 새 주소에서 「⬆️ 가져오기」 해 주세요.';
+    return;
+  }
+  // 넘어간 뒤 돌아오더라도 안내줄이 다시 뜨지 않게 미리 표시해 둔다
+  try { localStorage.setItem(HANDOFF_DONE_KEY, new Date().toISOString()); } catch (e) {}
+  statusEl.textContent = '새 주소로 넘어갑니다…';
+  location.href = handoffPeerOrigin('old') + '/#handoff=' + payload;
+}
+
+// 받는 쪽 — 주소 뒤에 #handoff= 가 붙어 들어왔을 때만 동작한다
+function listenHandoff() {
+  if (handoffRole() !== 'new') return;
+  const m = /^#handoff=([\s\S]+)$/.exec(location.hash || '');
+  if (!m) return;
+
+  // 주소를 먼저 지운다 — 새로 고침하거나 주소를 공유해도 기록이 따라다니지 않게
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+
+  let data = null;
+  try { data = JSON.parse(decodeURIComponent(m[1])); } catch (e) {}
+  if (!data || typeof data !== 'object') { showHandoffResult(null); return; }
+
+  let n = 0;
+  for (const k of Object.keys(data)) {
+    if (!BACKUP_PREFIX.test(k)) continue;            // 엉뚱한 키는 거른다
+    if (k === SETTINGS_KEY && hasKey()) continue;    // 이미 키를 넣어 뒀으면 설정은 건드리지 않는다
+    try { localStorage.setItem(k, data[k]); n++; } catch (e) {
+      showHandoffResult(null, '저장 공간이 모자랍니다 (' + n + '개까지 넣었습니다).');
+      return;
+    }
+  }
+  showHandoffResult(backupSummary(collectBackup()));
+}
+
+function showHandoffResult(summary, err) {
+  const bar = document.getElementById('moveBar');
+  if (!bar) return;
+  bar.classList.remove('hidden');
+  document.querySelector('.move-acts').classList.add('hidden');
+  const t = document.querySelector('.move-text');   // 아래에서 통째로 갈아 끼운다
+  t.innerHTML = err || !summary
+    ? '<b>❌ 기록을 옮기지 못했습니다</b><br><small>' +
+      (err || '넘어온 내용을 읽을 수 없었습니다.') +
+      ' 옛 주소에서 ⚙️ 설정 → 「⬇️ 내보내기」로 파일을 받아 여기서 「⬆️ 가져오기」 해 주세요.</small>'
+    : '<b>✅ 기록을 옮겼습니다</b> — ' + summary +
+      '<br><small>API 키는 안전을 위해 넘어오지 않습니다. ⚙️ 설정에서 한 번만 다시 넣어 주세요. ' +
+      '옛 주소의 기록도 그대로 남아 있습니다.</small>';
+}
+
+// 옛 주소에 기록이 남아 있으면 위쪽에 안내줄을 띄운다
+function initMoveBar() {
+  const bar = document.getElementById('moveBar');
+  if (!bar || handoffRole() !== 'old') return;
+  let moved = null;
+  try { moved = localStorage.getItem(HANDOFF_DONE_KEY); } catch (e) {}
+  if (moved) return;
+  if (!Object.keys(collectBackup()).length) return;
+  document.getElementById('moveSummary').textContent = backupSummary(collectBackup());
+  bar.classList.remove('hidden');
+  document.getElementById('btnMoveNow').addEventListener('click', () => startHandoff(document.getElementById('moveStatus')));
+  document.getElementById('btnMoveLater').addEventListener('click', () => {
+    bar.classList.add('hidden');
+  });
+}
+
 function importBackup(file) {
   const out = $('backupResult');
   const r = new FileReader();

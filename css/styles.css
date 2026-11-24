@@ -390,6 +390,18 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 80px; }
 }
 @page { size: A4; margin: 10mm; }
 
+/* 옛 주소 → 새 주소 안내줄 */
+.move-bar {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  background: #fffbeb; border-bottom: 2px solid #fcd34d; color: #92400e;
+  padding: 12px 20px; font-size: 14px;
+}
+.move-text { flex: 1 1 320px; }
+.move-text small { color: #a16207; font-size: 12.5px; line-height: 1.6; display: block; margin-top: 2px; }
+.move-status { margin-top: 6px; font-size: 13px; font-weight: 600; white-space: pre-wrap; }
+.move-acts { display: flex; gap: 8px; flex-wrap: wrap; }
+.move-acts .btn-primary, .move-acts .btn-secondary { padding: 9px 16px; font-size: 14px; }
+
 /* 설정 모달의 📦 학습 기록 옮기기 */
 .backup-box { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 4px; }
 .backup-box .q-actions { margin-top: 8px; }

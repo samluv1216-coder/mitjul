@@ -765,6 +765,8 @@ document.addEventListener('DOMContentLoaded', () => {
   $('btnCloseSettings').addEventListener('click', closeSettings);
   $('btnSaveSettings').addEventListener('click', onSaveSettings);
   $('btnTest').addEventListener('click', onTestConnection);
+  listenHandoff();   // 새 주소 쪽: ?handoff=1 로 열렸으면 옛 주소 창에서 기록을 받는다
+  initMoveBar();     // 옛 주소 쪽: 기록이 남아 있으면 「새 주소로 옮기기」 안내줄
   $('btnExportBackup').addEventListener('click', exportBackup);
   $('btnImportBackup').addEventListener('click', () => $('backupFile').click());
   $('backupFile').addEventListener('change', e => {
