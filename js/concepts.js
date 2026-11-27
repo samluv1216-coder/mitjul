@@ -129,6 +129,30 @@ function hasTheoryFor(q) {
   return e && e.theory ? e.theory : null;
 }
 
+/* 🎓 심화 학습용 — 문제를 안 풀고 주제만 공부할 때 쓰는 엔트리 생성.
+   ⚠️ saveConceptFromQuestion 을 쓰면 runs(풀이 기록)에 점수 없는 회차가 쌓여서
+      학습통계의 '학습 횟수'와 득점률이 실제보다 부풀려진다. 그래서 따로 둔다. */
+function ensureTopicEntry(q) {
+  const arr = getConcepts();
+  const key = conceptKey(q);
+  let e = arr.find(x => x.key === key);
+  if (e) return e;
+  const now = Date.now();
+  e = {
+    id: now + '_' + Math.random().toString(36).slice(2, 7),
+    key, t: now, lastT: now,
+    subject: q.subject || '', areaName: q.areaName || '', areaId: q.areaId || '',
+    topic: q.topic || '', qtypeId: '',
+    keyPoints: [], commonMistakes: [], explanations: [], trend: q.trend || '',
+    runs: [],          // ← 안 푼 주제이므로 비워 둔다
+    theory: null,
+    fromStudy: true,   // 심화 학습으로 들어온 주제 표시
+  };
+  arr.push(e);
+  putConcepts(arr);
+  return e;
+}
+
 function deleteConcept(id) {
   if (!confirm('이 주제의 개념 정리를 삭제할까요?')) return;
   putConcepts(getConcepts().filter(x => x.id !== id));
@@ -268,10 +292,14 @@ function renderConcepts() {
 
   const pend = pendingNotes().length;
 
+  // ⚠️ 심화 학습은 개념노트가 비어 있을 때 오히려 가장 필요하므로 빈 상태 분기보다 위에 둔다
+  const studyBox = `<div id="cnStudy"></div>`;
+
   if (!all.length && !pend) {
-    el.innerHTML = `<div class="card"><div class="empty">개념노트가 비어 있습니다.<br>
+    el.innerHTML = studyBox + `<div class="card"><div class="empty">아직 푼 문제에서 쌓인 개념이 없습니다.<br>
       문제를 풀고 <b>채점</b>하면 그 문항의 <b>핵심 키포인트·해설</b>이 주제별로 자동 정리됩니다. 📚<br>
-      결과 화면의 <b>「📘 이론 정리」</b>를 누르면 개념 정의·학자·혼동 개념 비교까지 함께 쌓입니다.</div></div>`;
+      위의 <b>🎓 심화 학습</b>에서는 문제를 풀지 않아도 주제를 골라 바로 정리할 수 있습니다.</div></div>`;
+    renderStudyPath();
     return;
   }
 
@@ -286,7 +314,7 @@ function renderConcepts() {
     <button class="btn-primary" onclick="onImportNotes()">📥 오답노트에서 ${pend}개 가져오기</button>
   </div>` : '';
 
-  el.innerHTML = importBanner + `<div class="card cn-toolbar">
+  el.innerHTML = studyBox + importBanner + `<div class="card cn-toolbar">
     <div class="cn-row">
       <input type="search" id="cnSearch" class="cn-search" placeholder="🔍 주제·키포인트·해설 내용 검색"
              value="${esc(CS.q)}" oninput="setConceptSearch(this.value)" autocomplete="off">
@@ -309,6 +337,7 @@ function renderConcepts() {
   <div id="cnList"></div>
   <div id="cnLost"></div>`;
 
+  renderStudyPath();
   renderConceptList();
   renderLostNotice();
 }
@@ -433,6 +462,133 @@ function retryConceptTopic(id) {
   if (!e) return;
   switchTab('solve');
   onGenerate({ subject: subjectIdOf(e.subject), qtypeId: e.qtypeId, areaId: e.areaId, topic: e.topic });
+}
+
+/* ==========================================================
+   🎓 심화 학습 — 영역별 핵심 이론 훑기
+   문제를 풀어야만 이론이 쌓이던 구조라, 먼저 이론을 보고 싶은 과목
+   (특히 교육학)에는 순서가 맞지 않았다. 여기서는 주제를 직접 골라서
+   바로 정리본을 만든다. 만든 것은 그대로 개념노트에 쌓여 검색·인쇄가 된다.
+   ========================================================== */
+const SP = { subject: 'edu', openArea: null, open: {}, busy: '' };
+
+function spSubjectName(id) {
+  return id === 'edu' ? '교육학' : id === 'lib' ? '문헌정보학(사서)' : '가정 전공';
+}
+
+// 주제 하나를 가리키는 가짜 문항 객체 (conceptKey 가 areaId|topic 이라 이것으로 충분)
+function spQ(area, topic) {
+  return {
+    subject: spSubjectName(SP.subject), areaId: area.id, areaName: area.name,
+    topic, trend: area.trend || '',
+  };
+}
+
+function spDone(area, topic) { return !!hasTheoryFor(spQ(area, topic)); }
+
+function spSetSubject(id) { SP.subject = id; SP.openArea = null; renderStudyPath(); }
+function spToggleArea(id) { SP.openArea = SP.openArea === id ? null : id; renderStudyPath(); }
+function spToggleTopic(key) { SP.open[key] = !SP.open[key]; renderStudyPath(); }
+
+// 주제 정리 — 저장된 게 있으면 AI를 부르지 않는다(비용 중복 방지)
+async function spStudy(areaId, idx, force) {
+  const area = findArea(SP.subject, areaId);
+  if (!area) return;
+  const topic = area.topics[idx];
+  const key = areaId + '|' + topic;
+  if (SP.busy) return;
+
+  if (!force && spDone(area, topic)) { SP.open[key] = true; renderStudyPath(); return; }
+  if (!hasKey()) { alert('먼저 ⚙️ 설정에서 API 키를 등록해 주세요.'); return; }
+
+  SP.busy = key; SP.open[key] = true; renderStudyPath();
+  try {
+    const th = await explainTopic(spSubjectName(SP.subject), area, topic);
+    // ⚠️ 엔트리를 먼저 만들어 둔다. 그냥 attachTheory 만 부르면 내부에서
+    //    saveConceptFromQuestion 을 타면서 점수 없는 풀이 기록(runs)이 쌓여
+    //    학습통계의 '학습 횟수'가 실제 푼 것보다 부풀려진다.
+    ensureTopicEntry(spQ(area, topic));
+    attachTheory(spQ(area, topic), th);
+  } catch (e) {
+    alert('이론 정리에 실패했습니다.\n\n' + humanizeError(e));
+  } finally {
+    SP.busy = ''; renderStudyPath();
+  }
+}
+
+function spProgress(area) {
+  const done = area.topics.filter(t => spDone(area, t)).length;
+  return { done, total: area.topics.length };
+}
+
+function renderStudyPath() {
+  const box = $('cnStudy');
+  if (!box) return;
+  const pool = poolFor(SP.subject);
+
+  let all = 0, allDone = 0;
+  pool.forEach(a => { const p = spProgress(a); all += p.total; allDone += p.done; });
+  const pct = all ? Math.round(allDone / all * 100) : 0;
+
+  const subs = [['edu', '🎓 교육학'], ['home', '🏠 가정 전공'], ['lib', '📚 사서']];
+
+  let h = `<div class="card sp-card">
+    <div class="sp-head">
+      <div>
+        <div class="sp-title">🎓 심화 학습 — 영역별 핵심 이론</div>
+        <div class="sp-sub">문제를 풀지 않아도 주제를 골라 바로 정리할 수 있습니다.
+          만든 정리는 아래 개념노트에 그대로 쌓여 검색·인쇄가 됩니다.</div>
+      </div>
+      <div class="sp-subs">${subs.map(([id, label]) =>
+        `<button class="sp-sub-btn ${SP.subject === id ? 'on' : ''}" onclick="spSetSubject('${id}')">${label}</button>`).join('')}</div>
+    </div>
+    <div class="sp-bar"><div class="sp-bar-in" style="width:${pct}%"></div></div>
+    <div class="sp-prog">${spSubjectName(SP.subject)} · <b>${allDone}</b> / ${all} 주제 정리함 (${pct}%)</div>
+    <div class="sp-areas">`;
+
+  pool.forEach(a => {
+    const p = spProgress(a);
+    const open = SP.openArea === a.id;
+    h += `<div class="sp-area ${open ? 'open' : ''}">
+      <button class="sp-area-h" onclick="spToggleArea('${a.id}')">
+        <span class="sp-ico">${a.icon || '📘'}</span>
+        <span class="sp-name">${esc(a.name)}</span>
+        <span class="sp-cnt ${p.done === p.total ? 'full' : ''}">${p.done}/${p.total}</span>
+        <span class="sp-arrow">${open ? '▾' : '▸'}</span>
+      </button>`;
+    if (open) {
+      h += `<div class="sp-body">`;
+      if (a.trend) h += `<div class="sp-trend"><b>출제 경향</b> ${esc(a.trend)}</div>`;
+      a.topics.forEach((t, i) => {
+        const key = a.id + '|' + t;
+        const done = spDone(a, t);
+        const busy = SP.busy === key;
+        const shown = SP.open[key];
+        h += `<div class="sp-topic ${done ? 'done' : ''}">
+          <div class="sp-topic-h">
+            <span class="sp-chk">${done ? '✅' : '⬜'}</span>
+            <span class="sp-t" onclick="spToggleTopic('${esc(key).replace(/'/g, "\\'")}')">${esc(t)}</span>
+            ${busy
+              ? `<span class="sp-busy">정리하는 중…</span>`
+              : done
+                ? `<button class="sp-go" onclick="spToggleTopic('${esc(key).replace(/'/g, "\\'")}')">${shown ? '접기' : '보기'}</button>
+                   <button class="sp-again" title="다시 정리" onclick="spStudy('${a.id}',${i},1)">🔄</button>`
+                : `<button class="sp-go pri" onclick="spStudy('${a.id}',${i})">📘 정리하기</button>`}
+          </div>`;
+        if (shown && done) h += `<div class="sp-theory">${conceptTheoryHtml(hasTheoryFor(spQ(a, t)), { small: true })}</div>`;
+        h += `</div>`;
+      });
+      h += `</div>`;
+    }
+    h += `</div>`;
+  });
+
+  h += `</div>
+    <div class="sp-note">⚠️ 주제 하나를 정리할 때 AI를 <b>1회</b> 호출합니다. 한 번 정리한 주제는 저장되어 다시 부르지 않습니다.
+      내용이 부실하면 🔄로 다시 정리할 수 있습니다. 학자명·연도는 교재로 한 번 더 확인하세요.</div>
+  </div>`;
+
+  box.innerHTML = h;
 }
 
 /* ---------- 인쇄 ---------- */

@@ -339,6 +339,52 @@ async function explainTheory(q) {
   return th;
 }
 
+/* ---------- 🎓 심화 학습 — 문제를 안 풀고 주제만으로 이론 정리 ----------
+   explainTheory 는 '방금 푼 문항'을 입력으로 받아서, 문제를 풀어야만 쓸 수 있었다.
+   그런데 교육학처럼 먼저 이론을 훑고 싶은 과목은 그 순서가 맞지 않는다.
+   그래서 영역·주제만으로 같은 모양의 JSON 을 만드는 길을 따로 둔다.
+   ⭐ topics.js 의 area.trend(영역별 기출 경향)를 같이 실어 보내는 것이 핵심 —
+      그래야 백과사전식 설명이 아니라 '임용에 나오는 각도'로 정리된다. */
+const TOPIC_SYSTEM = `당신은 한국 중등교사 임용시험 전공 교재를 집필하는 교수입니다. 수험생이 고른 '주제 하나'를 교재처럼 체계적으로 정리합니다.
+
+[정리 원칙]
+1. 문제 풀이가 아니라 '개념 자체의 정리'입니다. 처음 보는 사람도 이것만 읽고 이해할 수 있어야 합니다.
+2. 서답형 답안에 그대로 쓸 수 있는 정확한 학술 용어를 사용합니다.
+3. ⚠️ 확실하지 않은 학자명·연도·수치는 절대 쓰지 마세요. 불확실하면 그 항목을 null 또는 빈 배열로 두세요. 그럴듯한 추측은 수험생에게 해롭습니다.
+4. 교육과정 관련 내용은 2022 개정 교육과정 기준입니다.
+5. 함께 주어지는 [이 영역의 기출 경향]을 반드시 반영하세요. 그 경향에서 실제로 묻는 각도로 정리하고, examPoint 에 그 연결을 적습니다.
+6. 혼동 개념 비교는 수험생이 실제로 헷갈리는 쌍만 넣고, 차이를 한 문장으로 분명히 가릅니다.
+7. 과장 없이 담백하게. 분량보다 정확성이 중요합니다.
+
+[출력 — 아래 JSON만 출력, 다른 텍스트 금지]
+{
+ "concept": "주제의 핵심 개념 이름",
+ "oneLine": "한 줄 정의 (시험장에서 떠올릴 압축 문장)",
+ "definition": "개념의 정의와 배경 (3~5문장)",
+ "scholars": "제안·정립한 학자나 이론적 계보 (확실하지 않으면 null)",
+ "elements": [{"name":"구성 요소·유형·단계","desc":"설명"}],
+ "compare": [{"term":"혼동되는 개념","diff":"무엇이 어떻게 다른지"}],
+ "related": [{"name":"함께 알아야 할 이론·개념","why":"이 개념과 어떻게 연결되는지"}],
+ "examPoint": "임용 출제 포인트 — 이 개념이 어떤 형태로 물어지는지",
+ "memorize": ["암기용 압축 문장 2~4개"]
+}`;
+
+// subjectName: '교육학' 등 / area: topics.js 의 영역 객체 / topic: 주제 문자열
+async function explainTopic(subjectName, area, topic) {
+  const user = `[정리할 주제]
+과목: ${subjectName} / 영역: ${area.name}
+주제: ${topic}
+
+[이 영역의 기출 경향]
+${area.trend || '(없음)'}
+
+위 주제를 교재처럼 정리하세요. 확실하지 않은 학자명·연도는 비우고, JSON만 출력하세요.`;
+  const raw = await callAI(TOPIC_SYSTEM, user, 8000);
+  const th = extractJson(raw);
+  if (!th || (!th.concept && !th.definition)) throw new Error('JSONPARSE: ' + aiFailDetail());
+  return th;
+}
+
 // ---------- 연결 테스트 ----------
 async function testConnection() {
   const txt = await callAI('간단한 연결 테스트입니다.', '"OK"라고만 답하세요.', 16);

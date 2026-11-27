@@ -227,6 +227,60 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 80px; }
 .btn-mini.danger:hover { background: var(--brand-bg); }
 
 /* ---------- 📚 개념노트 ---------- */
+/* ---------- 🎓 심화 학습 (개념노트 상단) ---------- */
+.sp-card { padding: 18px 20px; margin-bottom: 14px; }
+.sp-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.sp-title { font-size: 17px; font-weight: 800; color: var(--brand-dark); }
+.sp-sub { font-size: 12.5px; color: var(--muted); margin-top: 3px; max-width: 560px; }
+.sp-subs { display: flex; gap: 6px; flex-wrap: wrap; }
+.sp-sub-btn { padding: 7px 13px; border: 1.5px solid var(--line); background: #fff; border-radius: 999px;
+  font-size: 13px; font-weight: 700; color: var(--muted); cursor: pointer; font-family: inherit; }
+.sp-sub-btn.on { background: var(--brand-bg); border-color: var(--brand); color: var(--brand-dark); }
+
+.sp-bar { height: 7px; background: var(--line); border-radius: 999px; margin: 14px 0 6px; overflow: hidden; }
+.sp-bar-in { height: 100%; background: linear-gradient(90deg, var(--brand), #f87171); border-radius: 999px; transition: width .3s; }
+.sp-prog { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+.sp-prog b { color: var(--brand-dark); font-size: 15px; }
+
+.sp-areas { display: flex; flex-direction: column; gap: 7px; }
+.sp-area { border: 1.5px solid var(--line); border-radius: 10px; overflow: hidden; }
+.sp-area.open { border-color: #fca5a5; }
+.sp-area-h { width: 100%; display: flex; align-items: center; gap: 10px; padding: 11px 14px;
+  background: #fff; border: 0; cursor: pointer; font-family: inherit; text-align: left; }
+.sp-area.open .sp-area-h { background: var(--brand-bg); }
+.sp-ico { font-size: 17px; }
+.sp-name { flex: 1; font-size: 14.5px; font-weight: 700; color: var(--ink); }
+.sp-cnt { font-size: 12px; font-weight: 800; color: var(--muted); background: #f3f4f6;
+  padding: 2px 9px; border-radius: 999px; }
+.sp-cnt.full { background: #dcfce7; color: #15803d; }
+.sp-arrow { color: var(--muted); font-size: 12px; }
+
+.sp-body { padding: 4px 14px 12px; background: #fff; }
+.sp-trend { font-size: 12.5px; color: #78350f; background: #fffbeb; border: 1px solid #fde68a;
+  border-radius: 8px; padding: 9px 12px; margin: 8px 0 10px; line-height: 1.6; }
+.sp-trend b { color: #92400e; margin-right: 5px; }
+
+.sp-topic { border-top: 1px solid #f3f4f6; }
+.sp-topic-h { display: flex; align-items: center; gap: 9px; padding: 9px 2px; }
+.sp-chk { font-size: 13px; }
+.sp-t { flex: 1; font-size: 13.5px; color: var(--ink); cursor: pointer; line-height: 1.5; }
+.sp-topic.done .sp-t { color: #15803d; font-weight: 600; }
+.sp-busy { font-size: 12.5px; color: var(--brand); font-weight: 700; }
+.sp-go { padding: 5px 11px; border: 1.5px solid var(--line); background: #fff; border-radius: 7px;
+  font-size: 12.5px; font-weight: 700; color: var(--muted); cursor: pointer; font-family: inherit; white-space: nowrap; }
+.sp-go.pri { background: var(--brand); border-color: var(--brand); color: #fff; }
+.sp-again { padding: 5px 8px; border: 1.5px solid var(--line); background: #fff; border-radius: 7px;
+  font-size: 12.5px; cursor: pointer; font-family: inherit; }
+.sp-theory { padding: 2px 0 12px; }
+.sp-note { font-size: 12px; color: var(--muted); margin-top: 14px; padding-top: 12px;
+  border-top: 1px solid var(--line); line-height: 1.7; }
+
+@media (max-width: 640px) {
+  .sp-head { flex-direction: column; }
+  .sp-topic-h { flex-wrap: wrap; }
+  .sp-t { flex-basis: 100%; }
+}
+
 .cn-toolbar { padding: 14px 16px; }
 .cn-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .cn-row2 { margin-top: 10px; }
