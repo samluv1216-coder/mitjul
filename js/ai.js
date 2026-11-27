@@ -2,6 +2,47 @@
    밑줄 — AI 호출 (출제·검증·채점)  BYOK: Claude/Gemini/OpenAI
    ========================================================== */
 
+/* ---------- 마지막 AI 응답의 상태 ----------
+   ⚠️ 왜 필요한가 — 예전엔 어떤 이유로 실패하든 "AI 응답 해석에 실패했습니다" 한 줄만
+      보여 줘서, 빈 응답인지·잘린 건지·JSON 이 아닌 글인지 구분할 수 없었다.
+      같은 앱인데 기기마다 설정(제공자·모델)이 달라서 한쪽만 실패하는 일이 잦은데
+      그 원인을 화면에서 알 길이 없었음. 응답의 길이·종료사유·앞부분을 남겨 둔다.
+   ⚠️ sample 은 화면에 노출되므로 API 키는 절대 담지 않는다(응답 본문만). */
+let LAST_AI = { provider: '', model: '', stop: '', len: 0, sample: '', search: false };
+
+function noteAI(provider, model, stop, text, search) {
+  LAST_AI = {
+    provider, model,
+    stop: stop || '',
+    len: (text || '').length,
+    sample: (text || '').trim().slice(0, 200),
+    search: !!search,
+  };
+  return text;
+}
+
+// JSON 파싱이 실패했을 때, 마지막 응답 상태로 "왜 실패했는지"를 사람 말로 만든다.
+function aiFailDetail() {
+  const a = LAST_AI;
+  const who = `${a.provider || '?'} / ${a.model || '?'}`;
+
+  if (a.provider === 'openai' && a.search) {
+    return `OpenAI(${a.model})는 웹 검색을 하지 못해 "검색할 수 없다"는 안내문만 돌려주는 경우가 많습니다.\n`
+         + `→ 설정에서 제공자를 Claude 또는 Gemini 로 바꾸고 다시 시도해 주세요.`
+         + (a.sample ? `\n\nAI가 보낸 말: "${a.sample}"` : '');
+  }
+  if (!a.len) {
+    return `AI가 빈 응답을 돌려줬습니다. (${who}, 종료사유: ${a.stop || '알 수 없음'})\n`
+         + `→ 생각하기나 검색에 출력 토큰을 다 써서 본문이 안 나온 경우입니다. 다시 시도하거나 다른 제공자로 바꿔 보세요.`;
+  }
+  if (/max_tokens|MAX_TOKENS|length/i.test(a.stop)) {
+    return `AI 응답이 중간에 잘렸습니다. (${who}, 글자수 ${a.len})\n`
+         + `→ 다시 눌러 주세요. 계속 잘리면 다른 제공자로 바꿔 보세요.`;
+  }
+  return `AI가 JSON 이 아닌 답을 돌려줬습니다. (${who}, 종료사유: ${a.stop || '-'}, 글자수 ${a.len})\n\n`
+       + `AI가 보낸 말: "${a.sample}"`;
+}
+
 // ---------- 공통 호출 ----------
 // opts.search: true면 웹 검색 도구 사용 (Claude·Gemini 지원, OpenAI는 모델 지식으로 폴백)
 async function callAI(system, user, maxTokens, opts) {
@@ -35,7 +76,8 @@ async function callAI(system, user, maxTokens, opts) {
     });
     if (!res.ok) throw await apiError(res, 'Claude');
     const data = await res.json();
-    return (data.content || []).map(c => c.text || '').join('');
+    const text = (data.content || []).map(c => c.text || '').join('');
+    return noteAI('claude', model, data.stop_reason, text, useSearch);
   }
 
   if (p === 'gemini') {
@@ -52,8 +94,10 @@ async function callAI(system, user, maxTokens, opts) {
     });
     if (!res.ok) throw await apiError(res, 'Gemini');
     const data = await res.json();
-    const parts = data.candidates?.[0]?.content?.parts || [];
-    return parts.map(x => x.text || '').join('');
+    const cand = data.candidates?.[0] || {};
+    const parts = cand.content?.parts || [];
+    const text = parts.map(x => x.text || '').join('');
+    return noteAI('gemini', model, cand.finishReason, text, useSearch);
   }
 
   // openai
@@ -67,7 +111,8 @@ async function callAI(system, user, maxTokens, opts) {
   });
   if (!res.ok) throw await apiError(res, 'OpenAI');
   const data = await res.json();
-  return data.choices?.[0]?.message?.content || '';
+  const ch = data.choices?.[0] || {};
+  return noteAI('openai', model, ch.finish_reason, ch.message?.content || '', useSearch);
 }
 
 async function apiError(res, name) {
@@ -81,17 +126,22 @@ async function apiError(res, name) {
 function humanizeError(e) {
   const m = String(e && e.message || e);
   if (m === 'NOKEY') return '⚙️ 우측 상단 [설정]에서 AI API 키를 먼저 등록해 주세요.';
+  // ⚠️ JSONPARSE 는 맨 먼저 거른다. 뒤의 /model/ 같은 느슨한 패턴이
+  //    상세 설명 안의 영단어를 잡아채 엉뚱한 안내로 바꿔 버리기 때문.
+  if (/^JSONPARSE/.test(m)) {
+    const detail = m.replace(/^JSONPARSE:?\s*/, '');
+    return '📄 ' + (detail || 'AI 응답을 해석하지 못했습니다. 다시 눌러 주세요.');
+  }
   if (/401|invalid.*key|authentication/i.test(m)) return '🔑 API 키가 유효하지 않습니다. 설정에서 키를 다시 확인해 주세요.\n(' + m + ')';
   if (/429|rate|quota|billing|credit/i.test(m)) return '⏳ 사용량 한도 또는 크레딧 문제입니다. 잠시 후 재시도하거나 결제 상태를 확인해 주세요.\n(' + m + ')';
   if (/404|not.*found|model/i.test(m)) return '🤖 모델 이름이 잘못됐을 수 있습니다. 설정에서 모델을 비우면 기본값을 사용합니다.\n(' + m + ')';
   if (/Failed to fetch|NetworkError|CORS/i.test(m)) return '🌐 네트워크 오류입니다. 인터넷 연결을 확인해 주세요.\n(' + m + ')';
-  if (/JSONPARSE/.test(m)) return '📄 AI 응답 해석에 실패했습니다. [문제 출제]를 다시 눌러 주세요.';
   return '⚠️ 오류가 발생했습니다: ' + m;
 }
 
 // ---------- JSON 추출 (코드블록/불완전 응답 대응) ----------
 function extractJson(text) {
-  if (!text) throw new Error('JSONPARSE');
+  if (!text) throw new Error('JSONPARSE: ' + aiFailDetail());
   const block = text.match(/```json\s*([\s\S]*?)```/i) || text.match(/```\s*([\s\S]*?)```/);
   const candidates = [];
   if (block) candidates.push(block[1]);
@@ -112,7 +162,7 @@ function extractJson(text) {
   for (const c of candidates) {
     try { return JSON.parse(c.trim()); } catch (e) {}
   }
-  throw new Error('JSONPARSE');
+  throw new Error('JSONPARSE: ' + aiFailDetail());
 }
 
 // ---------- 출제 ----------
@@ -285,7 +335,7 @@ async function explainTheory(q) {
 이 문항이 다루는 핵심 이론을 교재처럼 정리하세요. 확실하지 않은 학자명·연도는 비우고, JSON만 출력하세요.`;
   const raw = await callAI(THEORY_SYSTEM, user, 8000);
   const th = extractJson(raw);
-  if (!th || (!th.concept && !th.definition)) throw new Error('JSONPARSE');
+  if (!th || (!th.concept && !th.definition)) throw new Error('JSONPARSE: ' + aiFailDetail());
   return th;
 }
 

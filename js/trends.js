@@ -109,11 +109,20 @@ async function fetchTrendsWithAI() {
 - 중등교사 임용시험 교육학 논술의 배경 맥락으로 쓰일 만한 것 위주
 - 최근 12개월 이내 소식 우선, 8~12개
 
-[출력 — JSON만, 다른 텍스트 금지]
+[웹 검색을 쓸 수 없는 경우]
+- 검색이 불가능하다는 안내문을 쓰지 말고, 알고 있는 지식만으로 같은 형식의 JSON을 채우세요.
+- 이때는 각 summary 끝에 "(검색 미사용·지식 기준)"을 덧붙이세요.
+
+[출력 — JSON만, 다른 텍스트 금지. 설명·머리말·코드블록 표시 없이 '{' 로 시작할 것]
 {"items":[{"title":"동향 제목","date":"시기(예: 2026.5)","summary":"핵심 내용 2~3문장 (사실 기반)","eduLink":"임용 교육학과의 연계 포인트 1문장 (교육과정/교육심리/교육방법/교육평가/교육행정/생활지도 중 어느 영역과 어떻게 연결되는지)"}]}`;
 
-  const raw = await callAI(TRENDS_SYSTEM, user, 6000, { search: true });
+  // ⚠️ 12000 — 6000 이면 모자랐다. 웹검색이 붙으면 검색 질의까지 출력 토큰을 먹는 데다,
+  //    sonnet-5 부터는 같은 한글을 약 30% 더 길게 세기 때문에 10건을 채우다 잘린다.
+  //    잘리면 JSON 이 깨져서 "해석 실패"가 된다.
+  const raw = await callAI(TRENDS_SYSTEM, user, 12000, { search: true });
   const parsed = extractJson(raw);
-  if (!parsed.items || !Array.isArray(parsed.items) || !parsed.items.length) throw new Error('JSONPARSE');
+  if (!parsed.items || !Array.isArray(parsed.items) || !parsed.items.length) {
+    throw new Error('JSONPARSE: ' + aiFailDetail());
+  }
   return saveTrendsData(parsed.items);
 }
